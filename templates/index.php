@@ -143,7 +143,14 @@
             <li class="menu-item">
               <a href="tables-basic.php" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-table"></i>
-                <div data-i18n="Tables">Tables</div>
+                <div data-i18n="Tables">Product List</div>
+              </a>
+            </li>
+
+            <li class="menu-item">
+              <a href="ui-collapse.php" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-home-circle"></i>
+                <div data-i18n="Analytics">Transactions</div>
               </a>
             </li>
 
