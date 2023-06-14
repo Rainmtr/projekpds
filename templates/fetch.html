@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Fetch Data from MongoDB</title>
+</head>
+<body>
+    <script>
+        fetch('fetch_data.php')
+          .then(response => response.json())
+          .then(data => {
+            // Handle the JSON data here
+            console.log(data);
+            // Perform any other operations with the data
+          })
+          .catch(error => {
+            // Handle any errors that occurred during the request
+            console.error(error);
+          });
+    </script>
+</body>
+</html>
