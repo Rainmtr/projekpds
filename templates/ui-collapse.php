@@ -1,5 +1,28 @@
-<!DOCTYPE html>
+<?php
+    require '../vendor/autoload.php';
 
+    // Koneksi ke database MongoDB
+    $client = new MongoDB\Client("mongodb://localhost:27017");
+    $db = $client->selectDatabase('tugas_pds');
+    $collection = $db->selectCollection('transaksi');
+    
+    // Query untuk mengambil semua dokumen dari koleksi "transaksi"
+    $cursor = $collection->find([]);
+    
+        foreach ($cursor as $c) {
+          foreach ($c as $key => $value) {
+            if ($key == 'items') {
+              foreach ($c->$key as $data) {
+            if(isset($data->item)){
+              print($data->item); 
+          }
+        }
+      }
+    }
+  }
+?>
+
+<!DOCTYPE html>
 <html
   lang="en"
   class="light-style layout-menu-fixed"
@@ -300,10 +323,19 @@
               <div class="row">
                 <div class="col-12">
                   <div class="card">
-                    <h3 class="card-header">Transactions #1</h3>
+                    <h3 class="card-header">Item<?php echo "Item: " . $item['item'] . "<br>"; ?></h3>
                     <div class="card-body">
-                      <p class="card-text">Show and hide multiple elements by referencing them with a selector.</p>
-
+                      <p class="card-text">Qty<?php echo "Qty: " . $item['qty'] . "<br>"; ?></p>
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>Nama Produk</th>
+                            <th>Jumlah</th>
+                            <th>Harga</th>
+                          </tr>
+                        </thead>
+  
+                      </table>
                       <p class="demo-inline-spacing">
                         <button
                           class="btn btn-primary me-1"
