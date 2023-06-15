@@ -1,25 +1,42 @@
-<?php
-    require '../vendor/autoload.php';
+<?php  
+    require '../../vendor/autoload.php';
 
-    // Koneksi ke database MongoDB
+    // Connect to MongoDB
     $client = new MongoDB\Client("mongodb://localhost:27017");
-    $db = $client->selectDatabase('tugas_pds');
-    $collection = $db->selectCollection('transaksi');
-    
-    // Query untuk mengambil semua dokumen dari koleksi "transaksi"
-    $cursor = $collection->find([]);
-    
-        foreach ($cursor as $c) {
-          foreach ($c as $key => $value) {
-            if ($key == 'items') {
-              foreach ($c->$key as $data) {
-            if(isset($data->item)){
-              print($data->item); 
-          }
+    // echo "Connection successful" . "<br/>";
+    $collection = $client->projek_pds->transaction_list;
+
+    // Fetch data from MongoDB
+    $result = $collection->find(
+        [],
+        ['projection' => [
+            'transaction_id' => 1, 
+            'cust_id' => 1, 
+            'date' => 1, 
+            'ship_country' => 1, 
+            'items' => 1, 
+            'total_price' => 1
+            ]]
+    );
+
+        // Iterate over the result and print the documents
+    foreach ($result as $document) {
+        foreach ($document as $key => $value) {
+            if (is_object($value) && $key != "_id") {
+                foreach ($value as $array) {
+                    foreach($array as $nested_doc => $nested_value) {
+                        echo $nested_doc . " = " . $nested_value;
+                        echo "</br>";
+                    }
+                }
+            }
+            elseif ($key != "_id") {
+                echo $key . " = " . $value;
+                echo "</br>";
+            }
         }
-      }
+        echo "</br>";
     }
-  }
 ?>
 
 <!DOCTYPE html>
