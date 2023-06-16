@@ -127,6 +127,7 @@
   </head>
 
   <body>
+
     <!-- Layout wrapper -->
     <div class="layout-wrapper layout-content-navbar">
       <div class="layout-container">
@@ -357,9 +358,9 @@
               <div class="row">
                 <div class="col-12">
                   <div class="card">
-                    <h3 class="card-header">Item<?php echo "Item: " . $item['item'] . "<br>"; ?></h3>
+                    <h3 class="card-header">Item</h3>
                     <div class="card-body">
-                      <p class="card-text">Qty<?php echo "Qty: " . $item['qty'] . "<br>"; ?></p>
+                      <p class="card-text">Qty</p>
                       <table>
                         <thead>
                           <tr>
