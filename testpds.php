@@ -1,46 +1,35 @@
-<?php
-    require '../vendor/autoload.php';
-    
-    // Connect
-    $client = new MongoDB\Client("mongodb://localhost:27017");
-    echo "Connection successful" . "<br/>";
+// Iterate over the result and print the documents
+    //foreach ($result as $document) {
+      //  foreach ($document as $key => $value) {
+        //      if (is_object($value) && $key != "_id") {
+          //          foreach ($value as $array) {
+            //              foreach($array as $nested_doc => $nested_value) {
+              //                  echo $nested_doc . " = " . $nested_value;
+              //                  echo "</br>";
+              //             }
+              //         }
+              //     }
+              //      elseif ($key != "_id") {
+                //          echo $key . " = " . $value;
+                //          echo "</br>";
+                //      }
+                //   }
+                // echo "</br>";
+                // }
 
-    $collection = $client->bookstore->books;
+    //foreach ($result as $document) {
+      //     echo $document['transaction_id'] . "</br>";
+      //     echo $document['cust_id'] . "</br>";
+      //     echo $document['date'] . "</br>";
+      //     echo $document['ship_country'] . "</br>";
+      //
+      //    $array_doc = json_decode(json_encode($document['items']), true);
+      //     foreach ($array_doc as $doc) {
+        //         foreach($doc as $key => $value) {
+          //             echo $key . " = " . $value . "</br>";
+            // }
+             //    }
 
-    $result = $collection->find( [ 'author' => 'Brandon Sanderson'] );
-
-    // Basic Print
-    foreach ($result as $document) {
-        get_object_value($document);
-        echo "</br>";
-    }
-
-    // // Get Array Key
-    // foreach ($result as $document) {
-    //     $keys = array_keys($document->getArrayCopy());
-    //     foreach ($keys as $key) {
-    //         echo $key, "<br/>";
-    //     }
-    // }
-
-    // // Print all attributes
-    // foreach ($result as $document) {
-    //     get_object_value($document);
-    //     echo "</br>";
-    // }
-
-    // function get_object_value($arr) {
-    //     if ($arr instanceof MongoDB\Model\BSONArray || $arr instanceof MongoDB\Model\BSONDocument) {
-    //         $arr = json_decode(json_encode($arr), true);
-    //     }
-
-    //     foreach ($arr as $key => $val) {
-    //         if (is_array($val)) {
-    //             get_object_value($val);
-    //         } else {
-    //             echo "$key = $val <br/>";
-    //         }
-    //     }     
-    // }
-?>
-
+             //      echo $document['total_price'] . "</br>";
+             //      echo "</br>";
+    //}

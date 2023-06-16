@@ -1,11 +1,10 @@
-<?php 
-    $manager = new MongoDB\Driver\Manager("mongodb://localhost:27017");
+<?php  
     require '../../vendor/autoload.php';
 
     // Connect to MongoDB
     $client = new MongoDB\Client("mongodb://localhost:27017");
     // echo "Connection successful" . "<br/>";
-    $database = $client->selectDatabase('tugas_pds');
+    $database = $client->selectDatabase('proyek_pds');
     $collection = $database->selectCollection('transaksi');
 
     // Mengambil semua dokumen dari koleksi
@@ -13,35 +12,31 @@
 
     // Array untuk menyimpan hasil
     $result = [];
-    
-    $filter = [];
-    $options = [
-    ];
-    $query = new MongoDB\Driver\Query($filter, $options);
-    $cursor = $manager->executeQuery('tugas_pds.transaksi', $query);
-    
 
     // Looping melalui hasil query
     foreach ($cursor as $document) {
         $row = [];
-        $row['transaction_id'] = $document->transaction_id;
-        $row['cust_id'] = $document->cust_id;
-        $row['date'] = $document->date;
-        $row['ship_country'] = $document->ship_country;
-        if(isset($document->items)){
-          $array_doc = $document->items;
-          foreach ($array_doc as $doc) {
-              foreach ($doc as $key => $value) {
-                  $row[$key] = $value;
-              }
-          }
-        }
-        $row['total_price'] = $document->total_price;
+        $row['transaction_id'] = $document['transaction_id'];
+        $row['cust_id'] = $document['cust_id'];
+        $row['date'] = $document['date'];
+        $row['ship_country'] = $document['ship_country'];
 
-        $result[] = $document;
-        
+        $array_doc = $document['items'];
+        foreach ($array_doc as $doc) {
+            $item = [];
+            $item['item'] = $doc['item'];
+            $item['qty'] = $doc['qty'];
+            $item['price'] = $doc['price'];
+            $row['items'][] = $item;
+        }
+
+        $row['total_price'] = $document['total_price'];
+
+        $result[] = $row;
     }
 
+    // Menggunakan json_encode untuk mencetak hasil
+    echo json_encode($result);
 ?>
 
 <!DOCTYPE html>
@@ -343,18 +338,20 @@
               <h4 class="fw-bold py-3 mb-4"><span class="text-muted fw-light">Home /</span> Transactions</h4>
 
               <!-- Collapse -->
-              <?php foreach ($result as $data){ ?>
               <div class="row">
                 <div class="col-12">
                   <div class="card">
-                    <h3 class="card-header">Item: <?php echo $data -> transaction_id ?> </h3>
+                    <h3 class="card-header">Item: <?php echo json_encode($result); ?></h3>
                     <div class="card-body">
-                      <p class="card-text">Date: <?php echo $data -> date ?> </p>
-                      <p class="card-text">Customer ID: <?php echo $data -> cust_id ?> </p>
-                      <p class="card-text">Product Name: <?php echo $array_doc[0]->item ?> </p>
-                      <p class="card-text">Quantity: <?php echo $array_doc[0]->qty ?> </p>
-                      <p class="card-text">Price: <?php echo $array_doc[0]->price ?> </p>
-          
+                      <p class="card-text">Qty</p>
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>Nama Produk</th>
+                            <th>Jumlah</th>
+                            <th>Harga</th>
+                          </tr>
+                        </thead>
   
                       </table>
                       <p class="demo-inline-spacing">
@@ -418,8 +415,6 @@
                   </div>
                 </div>
               </div>
-  <?php echo "<br/>";}?> 
-
             </div>
             <!-- / Content -->
 
@@ -468,6 +463,15 @@
     </div>
     <!-- / Layout wrapper -->
 
+    <div class="buy-now">
+      <a
+        href="https://themeselection.com/products/sneat-bootstrap-html-admin-template/"
+        target="_blank"
+        class="btn btn-danger btn-buy-now"
+        >Upgrade to Pro</a
+      >
+    </div>
+
     <!-- Core JS -->
     <!-- build:js assets/vendor/js/core.js -->
     <script src="../assets/vendor/libs/jquery/jquery.js"></script>
@@ -479,14 +483,102 @@
 
     <!-- Update table based on user search -->
     <script>
+      function filterTable() {
+        var searchValue = document.querySelector('.table-search').value.toLowerCase();
+        var rows = document.querySelectorAll('#table-body tr');
+
+        for (var i = 0; i < rows.length; i++) {
+          var row = rows[i];
+          var columns = row.getElementsByTagName('td');
+          var found = false;
+
+          for (var j = 0; j < columns.length; j++) {
+            var column = columns[j];
+
+            if (column.innerHTML.toLowerCase().indexOf(searchValue) > -1) {
+              found = true;
+              break;
+            }
+          }
+
+          if (found) {
+            row.style.display = '';
+          } else {
+            row.style.display = 'none';
+          }
+        }
+      }
+
+      function sortTable(column, direction) {
+        var rows = Array.from(document.querySelectorAll('#table-body tr'));
+
+        rows.sort(function (a, b) {
+          var aValue = a.querySelector('td[data-column="' + column + '"]').innerHTML;
+          var bValue = b.querySelector('td[data-column="' + column + '"]').innerHTML;
+
+          if (column === 'qty_on_hand') {
+            aValue = parseFloat(aValue.replace(/[^0-9.-]+/g, ''));
+            bValue = parseFloat(bValue.replace(/[^0-9.-]+/g, ''));
+          } else if (column === 'item_id') {
+            aValue = aValue.toLowerCase();
+            bValue = bValue.toLowerCase();
+          } else {
+            aValue = aValue.toLowerCase();
+            bValue = bValue.toLowerCase();
+          }
+
+          if (direction === 'asc') {
+            if (aValue < bValue) return -1;
+            if (aValue > bValue) return 1;
+          } else {
+            if (aValue > bValue) return -1;
+            if (aValue < bValue) return 1;
+          }
+
+          return 0;
+        });
+
+        var tableBody = document.getElementById('table-body');
+        tableBody.innerHTML = ''; // Clear existing table body content
+
+        rows.forEach(function (row) {
+          tableBody.appendChild(row);
+        });
+      }
+
+      function toggleSortDirection(button) {
+        if (button.textContent === '▲') { 
+          button.textContent = '▼';
+        } else {
+          button.textContent = '▲';
+        }
+      }
+      
+      var sortButtons = document.querySelectorAll('.sort-btn');
+      sortButtons.forEach(function (button) {
+        button.addEventListener('click', function () {
+          var column = button.getAttribute('data-column');
+          var direction = 'asc';
+
+          if (button.textContent === '▼') {
+            direction = 'desc';
+          }
+
+          sortTable(column, direction);
+          toggleSortDirection(button);
+        });
+      });
+
+      var submitButton = document.querySelector('.btn-primary');
+      submitButton.addEventListener('click', filterTable);
 
       var rowData = <?php echo json_encode($result); ?>;
-      var cardBody = document.getElementById("card-body");
-      var rowPlaceholder = document.getElementById("card-row-placeholder");
+      var tableBody = document.getElementById("table-body");
+      var rowPlaceholder = document.getElementById("table-row-placeholder");
       tableBody.removeChild(rowPlaceholder);
       for (var i = 0; i < rowData.length; i++) {
         var newRow = document.createElement("tr");
-        newRow.innerHTML = "<td data-column='transaction_id'>" + rowData[i].transaction_id + "</td>" + "<td data-column='cust_id'>" + rowData[i].cust_id + "</td>" + "<td data-column='date'>" + rowData[i].date + "</td>" + "<td data-column='ship_country'>" + rowData[i].ship_country + "</td>" + "<td data-column='total_price'>" + rowData[i].total_price + "</td>";
+        newRow.innerHTML = "<td data-column='item_id'>" + rowData[i].item_id + "</td>" + "<td data-column='categories'>" + rowData[i].categories + "</td>" + "<td data-column='item'>" + rowData[i].item + "</td>" + "<td data-column='qty_on_hand'>" + rowData[i].qty_on_hand + "</td>" + "<td data-column='item_price'>" + rowData[i].item_price + "</td>";
         tableBody.appendChild(newRow);
       }
     </script>
