@@ -178,17 +178,17 @@ $transactions = $collection->find()->toArray();
             startDate = new Date(currentDate.getTime() - 6 * 24 * 60 * 60 * 1000);
             interval = 1;
             groupBy = 'day';
-            console.log(startDate);
+            //console.log(startDate);
         } else if (filter === 'last4weeks') {
             startDate = new Date(currentDate.getTime() - 27 * 24 * 60 * 60 * 1000);
             interval = 7;
-            groupBy = 'week';
-            console.log(startDate);
+            groupBy = 'week_4';
+            // console.log(startDate);
         } else if (filter === 'last8weeks') {
             startDate = new Date(currentDate.getTime() - 55 * 24 * 60 * 60 * 1000);
             interval = 7;
-            groupBy = 'week';
-            console.log(startDate);
+            groupBy = 'week_8';
+            // console.log(startDate);
         } else if (filter === 'allTime') {
             startDate = new Date(2010, 0, 1);
             interval = 1;
@@ -295,6 +295,10 @@ $transactions = $collection->find()->toArray();
     function calculateTransactionValue(transactions, startDate, endDate, interval, groupBy) {
         var transactionValueData = [];
         var currentDate = new Date(startDate);
+        // console.log(startDate);
+        // console.log(endDate);
+        // console.log(interval);
+        // console.log(groupBy);
 
         while (currentDate <= endDate) {
             var intervalStartDate;
@@ -305,9 +309,15 @@ $transactions = $collection->find()->toArray();
                 intervalStartDate.setHours(0, 0, 0, 0);
                 intervalEndDate = new Date(currentDate);
                 intervalEndDate.setHours(23, 59, 59, 999);
-            } else if (groupBy === 'week') {
+            } else if (groupBy === 'week_4') {
                 intervalStartDate = new Date(currentDate);
-                intervalStartDate.setDate(intervalStartDate.getDate() - (interval - 1) * 7);
+                intervalStartDate.setDate(intervalStartDate.getDate() - (interval * 4) - 1);
+                intervalStartDate.setHours(0, 0, 0, 0);
+                intervalEndDate = new Date(currentDate);
+                intervalEndDate.setHours(23, 59, 59, 999);
+            } else if (groupBy === 'week_8') {
+                intervalStartDate = new Date(currentDate);
+                intervalStartDate.setDate(intervalStartDate.getDate() - (interval * 8) - 1);
                 intervalStartDate.setHours(0, 0, 0, 0);
                 intervalEndDate = new Date(currentDate);
                 intervalEndDate.setHours(23, 59, 59, 999);
@@ -345,19 +355,20 @@ $transactions = $collection->find()->toArray();
             });
 
             for (var country in intervalValueData) {
-            transactionValueData.push({
-                country: country,
-                interval: formatDate(currentDate, groupBy),
-                value: intervalValueData[country].value.toFixed(2),
-                count: intervalValueData[country].count
-            });
+                transactionValueData.push({
+                    country: country,
+                    interval: formatDate(currentDate, groupBy),
+                    value: intervalValueData[country].value.toFixed(2),
+                    count: intervalValueData[country].count
+                });
             }
+            
 
             // Move to the next interval
             if (groupBy === 'day') {
                 currentDate.setDate(currentDate.getDate() + 1);
-            } else if (groupBy === 'week') {
-                currentDate.setDate(currentDate.getDate() + interval * 7);
+            } else if (groupBy === 'week_4' || groupBy === 'week_8') {
+                currentDate.setDate(currentDate.getDate() + 7);
             } else if (groupBy === 'month') {
                 currentDate.setMonth(currentDate.getMonth() + interval);
             }
@@ -373,7 +384,7 @@ $transactions = $collection->find()->toArray();
     function formatDate(date, groupBy) {
         if (groupBy === 'day') {
             return date.toLocaleDateString();
-        } else if (groupBy === 'week') {
+        } else if (groupBy === 'week_4' || groupBy === 'week_8') {
             var startDate = new Date(date);
             startDate.setDate(date.getDate() - 6);
             return startDate.toLocaleDateString() + ' - ' + date.toLocaleDateString();
