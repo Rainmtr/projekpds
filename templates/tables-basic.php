@@ -72,7 +72,7 @@
   <?php
     include('../connections.php');
 
-    $sql = "SELECT * FROM product_list";
+    $sql = "SELECT * FROM product_list_2";
     $result = $conn->query($sql);
 
     $row = [];
@@ -81,6 +81,7 @@
       $row = $result->fetch_all(MYSQLI_ASSOC);
     }
   ?>
+  
   <body>
     <!-- Layout wrapper -->
     <div class="layout-wrapper layout-content-navbar">
@@ -248,20 +249,16 @@
                             <button class="btn sort-btn" data-column="item_id">▲</button>
                           </th>
                           <th class="sort-header">
-                            CATEGORIES
-                            <button class="btn sort-btn" data-column="categories">▲</button>
-                          </th>
-                          <th class="sort-header">
                             ITEM
                             <button class="btn sort-btn" data-column="item">▲</button>
                           </th>
                           <th class="sort-header">
-                            QUANTITY ON HAND
-                            <button class="btn sort-btn" data-column="qty_on_hand">▲</button>
+                            PRICE (USD $) 
+                            <button class="btn sort-btn" data-column="item_price">▲</button>
                           </th>
                           <th>
-                            PRICE (USD $)
-                            <button class="btn sort-btn" data-column="item_price">▲</button>
+                            QUANTITY ON HAND
+                            <button class="btn sort-btn" data-column="qty_on_hand">▲</button>
                           </th class="sort-header">
                         </tr>
                       </thead>
@@ -393,7 +390,7 @@
       tableBody.removeChild(rowPlaceholder);
       for (var i = 0; i < rowData.length; i++) {
         var newRow = document.createElement("tr");
-        newRow.innerHTML = "<td data-column='item_id'>" + rowData[i].item_id + "</td>" + "<td data-column='categories'>" + rowData[i].categories + "</td>" + "<td data-column='item'>" + rowData[i].item + "</td>" + "<td data-column='qty_on_hand'>" + rowData[i].qty_on_hand + "</td>" + "<td data-column='item_price'>" + rowData[i].item_price + "</td>";
+        newRow.innerHTML = "<td data-column='item_id'>" + rowData[i].item_id + "</td>" + "<td data-column='item'>" + rowData[i].item + "</td>" + "<td data-column='item_price'>" + rowData[i].item_price+ "</td>" + "<td data-column='qty_on_hand'>" + rowData[i].qty_on_hand  + "</td>";
         tableBody.appendChild(newRow);
       }
     </script>
