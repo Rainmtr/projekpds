@@ -344,7 +344,7 @@
 
               <!-- Collapse -->
               <!-- Form pencarian -->
-              <form method="POST">
+              <form action="ui-collapse.php" method="POST">
                   <div class="form-group row">
                       <label for="keyword" class="col-sm-2 col-form-label">Keyword</label>
                       <div class="col-sm-4">
@@ -382,203 +382,284 @@
                       </div>
                   </div>
               </form>
-            
-            <!-- Sort Transaksi -->
-            <?php
-            // Menentukan kolom untuk pengurutan
-            $sortBy = isset($_GET['sort']) ? $_GET['sort'] : 'transaction_id';
-            $sortDirection = isset($_GET['dir']) ? $_GET['dir'] : 'asc';
-            
-            // Melakukan pengurutan berdasarkan kolom dan arah pengurutan yang dipilih
-            usort($result, function ($a, $b) use ($sortBy, $sortDirection) {
-                $comparison = $a->$sortBy <=> $b->$sortBy;
-                return $sortDirection === 'asc' ? $comparison : -$comparison;
-            });
-            ?>
-            
-            <?php if (count($result) > 0) { ?>
-                <div class="row">
-                    <div class="col-12">
-                        <div class="card">
-                            <div class="card-header">
-                                <h3 class="card-title" style="font-weight: bold;">Search Results</h3>
-                                <div class="dropdown float-end">
-                                    <button class="btn btn-secondary dropdown-toggle" type="button" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                                        Sort By
-                                    </button>
-                                    <ul class="dropdown-menu" aria-labelledby="sortDropdown">
-                                        <li><a class="dropdown-item" href="?sort=transaction_id&dir=asc">Transaction ID Asc</a></li>
-                                        <li><a class="dropdown-item" href="?sort=transaction_id&dir=desc">Transaction ID Desc</a></li>
-                                        <li><a class="dropdown-item" href="?sort=date&dir=asc">Date Asc</a></li>
-                                        <li><a class="dropdown-item" href="?sort=date&dir=desc">Date Desc</a></li>
-                                        <li><a class="dropdown-item" href="?sort=cust_id&dir=asc">Customer ID Asc</a></li>
-                                        <li><a class="dropdown-item" href="?sort=cust_id&dir=desc">Customer ID Desc</a></li>
-                                        <!-- Tambahkan opsi sort berdasarkan kolom lain di sini -->
-                                    </ul>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <?php foreach ($result as $data) { ?>
-                                    <div class="card mb-3">
-                                        <h3 class="card-header" style="font-weight: bold;">Item: <?php echo $data->transaction_id; ?></h3>
-                                        <div class="card-body">
-                                            <p class="card-text, col-sm-5 col-form-label">Date: <?php echo $data->date; ?></p>
-                                            <p class="card-text, col-sm-5 col-form-label">Customer ID: <?php echo $data->cust_id; ?></p>
-                                            <p class="card-text, col-sm-5 col-form-label">Product Name: <?php echo $array_doc[0]->item; ?></p>
-                                            <p class="card-text, col-sm-5 col-form-label">Quantity: <?php echo $array_doc[0]->qty; ?></p>
-                                            <p class="card-text, col-sm-5 col-form-label">Price: <?php echo $array_doc[0]->price; ?></p>
-                                        </div>
-                                    </div>
-                                <?php } ?>
-                            </div>
+              
+              <!-- Sort Transaksi -->
+              <?php
+              // Menentukan kolom untuk pengurutan
+              $sortBy = isset($_GET['sort']) ? $_GET['sort'] : 'transaction_id';
+              $sortDirection = isset($_GET['dir']) ? $_GET['dir'] : 'asc';
+              
+              // Melakukan pengurutan berdasarkan kolom dan arah pengurutan yang dipilih
+              usort($result, function ($a, $b) use ($sortBy, $sortDirection) {
+                  $comparison = $a->$sortBy <=> $b->$sortBy;
+                  return $sortDirection === 'asc' ? $comparison : -$comparison;
+              });
+              ?>
+              
+              <!-- POST KALO SEARCH -->
+              <?php if ($_SERVER['REQUEST_METHOD'] === 'POST') { ?>
+                  <!-- Search Engine -->
+                  <?php
+                  if (isset($_POST['search'])) {
+                      $keyword = $_POST['keyword'];
+                      $type = $_POST['type'];
+              
+                      // Creating a search filter based on the keyword and search type
+                      $filter = [];
+                      if ($type == 'product_name') {
+                          $filter = ['items.item' => ['$regex' => $keyword]];
+                      } elseif ($type == 'cust_id') {
+                          $filter = ['cust_id' => ['$regex' => $keyword]];
+                      } elseif ($type == 'transaction_id') {
+                          $filter = ['transaction_id' => ['$regex' => $keyword]];
+                      }
+              
+                      // Query MongoDB with the search filter
+                      $query = new MongoDB\Driver\Query($filter);
+                      $cursor = $manager->executeQuery('tugas_pds.transaksi', $query);
+              
+                      // Load the query results into an array
+                      $result = $cursor->toArray();
+                  } else {
+                      // If no search form is submitted, display all data
+                      $query = new MongoDB\Driver\Query([]);
+                      $cursor = $manager->executeQuery('tugas_pds.transaksi', $query);
+              
+                      // Load the query results into an array
+                      $result = $cursor->toArray();
+                  }
+                  ?>
+              
+                  <!-- Result Search -->
+                  <?php if (!empty($result)) { ?>
+                      <div class="row">
+                          <div class="col-12">
+                              <div class="card mb-3">
+                                  <div class="card-body">
+                                      <h5 class="card-title"><strong>Search Result</strong></h5>
+                                      
+                                      <div class="row">
+                                          <?php $found = false; ?> <!-- Menambahkan variabel $found di luar perulangan foreach -->
+                                          <?php foreach ($result as $data) { ?>
+                                              <?php
+                                              $found = false;
+                                              if (isset($data->items)) {
+                                                  foreach ($data->items as $item) {
+                                                      if (!empty($keyword) && strpos(strtolower($item->item), strtolower($keyword)) !== false) {
+                                                          $found = true;
+                                                          break; // Menghentikan iterasi jika transaksi cocok ditemukan
+                                                      }
+                                                  }
+                                              }
+                                              if (!$found && !empty($keyword) && (($type == 'cust_id' && strpos(strtolower($data->cust_id), strtolower($keyword)) !== false) ||
+                                                  ($type == 'transaction_id' && strpos(strtolower($data->transaction_id), strtolower($keyword)) !== false))) {
+                                                  $found = true;
+                                              }
+                                              if ($found) {
+                                              ?>
+                              <div class="row">
+                                  <div class="col-12">
+                                      <div class="card">
+                                        <div class="card-header">
+                          
                         </div>
-                    </div>
-                </div>
-            <?php } ?>
-
-            <!-- Search Engine -->
-            <?php
-            if (isset($_POST['search'])) {
-                $keyword = $_POST['keyword'];
-                $type = $_POST['type'];
-                
-                // Creating a search filter based on the keyword and search type
-                $filter = [];
-                if ($type == 'product_name') {
-                    $filter = ['items.item' => ['$regex' => $keyword]];
-                } elseif ($type == 'cust_id') {
-                    $filter = ['cust_id' => ['$regex' => $keyword]];
-                } else {
-                    $filter = ['transaction_id' => ['$regex' => $keyword]];
-                }
-                
-                // Query MongoDB with the search filter
-                $query = new MongoDB\Driver\Query($filter);
-                $cursor = $manager->executeQuery('tugas_pds.transaksi', $query);
-                
-                // Load the query results into an array
-                $result = $cursor->toArray();
-            } else {
-                // If no search form is submitted, display all data
-                $query = new MongoDB\Driver\Query([]);
-                $cursor = $manager->executeQuery('tugas_pds.transaksi', $query);
-                
-                // Load the query results into an array
-                $result = $cursor->toArray();
-            }
-            ?>
-            
-            <!-- Result Search -->
-            <?php if (!empty($result)) { ?>
-                <?php foreach ($result as $data) { ?>
-                    <?php
-                    $found = false;
-                    if (isset($data->items)) {
-                        foreach ($data->items as $item) {
-                            if (strpos(strtolower($item->item), strtolower($keyword)) !== false) {
-                                $found = true;
-                                break;
-                            }
-                        }
-                    }
-                    if (strpos(strtolower($data->cust_id), strtolower($keyword)) !== false) {
-                        $found = true;
-                    }
-                    if (strpos(strtolower($data->transaction_id), strtolower($keyword)) !== false) {
-                        $found = true;
-                    }
-                    if ($found) {
-                    ?>
-           
-                    <?php } ?>
-                <?php } ?>
-            <?php } else { ?>
-                <div class="row">
-                    <div class="col-12 text-center">
-                        <h4>No data found</h4>
-                    </div>
-                </div>
-            <?php } ?>
-
-            <?php if (count($result) > 0) { ?>
-              <?php foreach ($result as $data){ ?>
-                <div class="row">
-                  <div class="col-12">
-                    <div class="card">
-                      <h3 class="card-header" style="font-weight: bold;">Item: <?php echo $data -> transaction_id ?> </h3>
-                      <div class="card-body">
-                        <h4 class="card-text, col-sm-5 col-form-label">Date: <?php echo $data -> date ?> </h4>
-                        <h4 class="card-text, col-sm-5 col-form-label">Customer ID: <?php echo $data -> cust_id ?> </h4>
-                        <h4 class="card-text, col-sm-5 col-form-label">Product Name: <?php echo $array_doc[0]->item ?> </h4>
-                        <h4 class="card-text, col-sm-5 col-form-label">Quantity: <?php echo $array_doc[0]->qty ?> </h4>
-                        <h4 class="card-text, col-sm-5 col-form-label">Price: <?php echo $array_doc[0]->price ?> </h4>
-            
-                        <p class="demo-inline-spacing">
-                          <button
-                            class="btn btn-primary me-1"
-                            type="button"
-                            data-bs-toggle="collapse"
-                            data-bs-target=".multi-collapse"
-                            aria-expanded="false"
-                            aria-controls="multiCollapseExample1 multiCollapseExample2"
-                          >
-                            Show Details
-                          </button>
-                        </p>
-
-                        <!-- Details Per-Transaksi -->
-                        <div class="row">
-                          <div class="col-12 col-md-6 mb-2 mb-md-0">
-                            <div class="collapse multi-collapse" id="multiCollapseExample1">
-                              <!-- Ordered Product -->
-                              <div class="my-3">
-                                <div class="card shadow-none bg-transparent border border-secondary mb-3">
-                                  <div class="card-body">
-                                    <h5 class="card-title">Product Title</h5>
-                                    <p class="card-text">1 x RP 25.000</p>
+                                          <div class="card-body">
+                                              <div class="card mb-3 shadow-lg">
+                                                  <h3 class="card-header" style="font-weight: bold;">Transaction ID: <?php echo $data->transaction_id; ?></h3>
+                                                  <div class="card-body">
+                                                      <p class="card-text col-sm-5 col-form-label">Date: <?php echo $data->date; ?></p>
+                                                      <p class="card-text col-sm-5 col-form-label">Customer ID: <?php echo $data->cust_id; ?></p>
+                                                      <!-- Button Show Details -->
+                                                      <p class="demo-inline-spacing">
+                                                          <button
+                                                              class="btn btn-primary me-1"
+                                                              type="button"
+                                                              data-bs-toggle="collapse"
+                                                              data-bs-target="#multiCollapseExample<?php echo $data->transaction_id; ?>"
+                                                              aria-expanded="false"
+                                                              aria-controls="multiCollapseExample<?php echo $data->transaction_id; ?>"
+                                                              onclick="toggleDetails('<?php echo $data->transaction_id; ?>')"
+                                                          >
+                                                              Show Details
+                                                          </button>
+                                                      </p>
+                                                      <!-- Details Per-Transaksi -->
+                                                      <div class="row">
+                                                          <div class="col-12">
+                                                              <div class="collapse multi-collapse" id="multiCollapseExample<?php echo $data->transaction_id; ?>">
+                                                                  <?php
+                                                                  $productList = array();
+                                                                  foreach ($data->items as $product) {
+                                                                      if (isset($productList[$product->item])) {
+                                                                          $productList[$product->item]->qty += $product->qty;
+                                                                      } else {
+                                                                          $productList[$product->item] = $product;
+                                                                      }
+                                                                  }
+                                                                  foreach ($productList as $product) {
+                                                                      ?>
+                                                                      <div class="my-3">
+                                                                          <div class="card shadow-none bg-transparent border border-secondary mb-3">
+                                                                              <div class="card-body">
+                                                                                  <h5 class="card-title">Product: <?php echo $product->item; ?></h5>
+                                                                                  <p class="card-text">Price Unit: <?php echo $product->price; ?> x <?php echo $product->qty; ?> (qty)</p>
+                                                                              </div>
+                                                                          </div>
+                                                                      </div>
+                                                                  <?php } ?>
+                                                              </div>
+                                                          </div>
+                                                      </div>
+                                                  </div>
+                                              </div>
+                                          </div>
+                                      </div>
                                   </div>
-                                </div>
                               </div>
-                              
-                              <div class="my-3">
-                                <div class="card shadow-none bg-transparent border border-secondary mb-3">
-                                  <div class="card-body">
-                                    <h5 class="card-title">Product Title</h5>
-                                    <p class="card-text">1 x RP 25.000</p>
-                                  </div>
-                                </div>
+                              </br>
+                          <?php
+                          }
+                      }
+                      if (!$found) { ?> <!-- Menambahkan pengecekan untuk menampilkan pesan "No Data Found" -->
+                          <div class="row">
+                              <div class="col-12 text-center">
+                                  <h4>No Data Found</h4>
                               </div>
+                          </div>
+                      <?php } ?>
+                  <?php } else { ?>
+                      <div class="row">
+                          <div class="col-12 text-center">
+                              <h4>No Data Found</h4>
+                          </div>
+                      </div>
+                  <?php } ?>
+              
+              
+              
 
-                              <div class="my-3">
-                                <div class="card shadow-none bg-transparent border border-secondary mb-3">
-                                  <div class="card-body">
-                                    <h5 class="card-title">Product Title</h5>
-                                    <p class="card-text">1 x RP 25.000</p>
+
+              <!--POST KALO NGGA SEARCH-->
+              <?php } else { ?>
+                <?php if (count($result) > 0) { ?>
+                  <div class="row">
+                    <div class="col-12">
+                      <div class="card">
+                        <div class="card-header">
+                          <div class="dropdown float-end">
+                            <button class="btn btn-secondary dropdown-toggle" type="button" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                              Sort By
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="sortDropdown">
+                              <li><a class="dropdown-item" href="?sort=transaction_id&dir=asc">Transaction ID Asc</a></li>
+                              <li><a class="dropdown-item" href="?sort=transaction_id&dir=desc">Transaction ID Desc</a></li>
+                              <li><a class="dropdown-item" href="?sort=date&dir=asc">Date Asc</a></li>
+                              <li><a class="dropdown-item" href="?sort=date&dir=desc">Date Desc</a></li>
+                              <li><a class="dropdown-item" href="?sort=cust_id&dir=asc">Customer ID Asc</a></li>
+                              <li><a class="dropdown-item" href="?sort=cust_id&dir=desc">Customer ID Desc</a></li>
+                              <!-- Tambahkan opsi sort berdasarkan kolom lain di sini -->
+                            </ul>
+                          </div>
+                        </div>
+                        <div class="card-body">
+                          <?php foreach ($result as $data) { ?>
+                            <div class="card mb-3 shadow-lg">
+                              <h3 class="card-header" style="font-weight: bold;">Transaction ID: <?php echo $data->transaction_id; ?></h3>
+                              <div class="card-body">
+                                <p class="card-text col-sm-5 col-form-label">Date: <?php echo $data->date; ?></p>
+                                <p class="card-text col-sm-5 col-form-label">Customer ID: <?php echo $data->cust_id; ?></p>
+         
+
+                                
+                                <!-- Button Show Details -->
+                                <p class="demo-inline-spacing">
+                                  <button
+                                    class="btn btn-primary me-1"
+                                    type="button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#multiCollapseExample<?php echo $data->transaction_id; ?>"
+                                    aria-expanded="false"
+                                    aria-controls="multiCollapseExample<?php echo $data->transaction_id; ?>"
+                                    onclick="toggleDetails('<?php echo $data->transaction_id; ?>')"
+                                  >
+                                    Show Details
+                                  </button>
+                                </p>
+                                <!-- Details Per-Transaksi -->
+                                <div class="row">
+                                  <div class="col-12">
+                                    <div class="collapse multi-collapse" id="multiCollapseExample<?php echo $data->transaction_id; ?>">
+                                      <?php
+                                      $productList = array();
+                                      foreach ($data->items as $product) {
+                                        if (isset($productList[$product->item])) {
+                                          $productList[$product->item]->qty += $product->qty;
+                                        } else {
+                                          $productList[$product->item] = $product;
+                                        }
+                                      }
+                                      foreach ($productList as $product) {
+                                      ?>
+                                        <div class="my-3">
+                                          <div class="card shadow-none bg-transparent border border-secondary mb-3">
+                                            <div class="card-body">
+                                              <h5 class="card-title">Product: <?php echo $product->item; ?></h5>
+                                              <p class="card-text">Price Unit: <?php echo $product->price; ?> x <?php echo $product->qty; ?> (qty)</p>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      <?php } ?>
+                                    </div>
                                   </div>
                                 </div>
+                                
+                                
+
+
                               </div>
                             </div>
-                          </div>
-                          <div class="col-12 col-md-6">
-                            <div class="collapse multi-collapse" id="multiCollapseExample2">
-                              <div class="my-3">
-                                <div class="card shadow-none bg-transparent border border-secondary mb-3">
-                                  <div class="card-body">
-                                    <h5 class="card-title">Shipment</h5>
-                                    <p class="card-text">info about shipment</p>
-                                  </div>
-                                </div>
-                              </div> 
-                            </div>
-                          </div>
+                          <?php } ?>
                         </div>
                       </div>
                     </div>
                   </div>
-                  
-                </div>
-              <?php echo "<br/>";}?> 
-              <?php echo "<br/>";}?> 
+                <?php } ?>
+              <?php } ?>
+              
+              <script>
+                function toggleDetails(transactionId) {
+                  var detailsElement = document.getElementById('multiCollapseExample' + transactionId);
+                  var isExpanded = detailsElement.classList.contains('show');
+                  if (isExpanded) {
+                    detailsElement.classList.remove('show');
+                  } else {
+                    // Tutup semua elemen details yang sedang terbuka
+                    var openDetails = document.querySelectorAll('.collapse.multi-collapse.show');
+                    for (var i = 0; i < openDetails.length; i++) {
+                      openDetails[i].classList.remove('show');
+                    }
+                    // Buka elemen details yang sesuai dengan transactionId yang diberikan
+                    detailsElement.classList.add('show');
+                  }
+                }
+              
+                // Tambahkan event listener untuk mengatur penutupan ketika button diklik lagi
+                var buttons = document.querySelectorAll('.btn-primary');
+                buttons.forEach(function (button) {
+                  button.addEventListener('click', function () {
+                    // Jika button sudah memiliki class 'collapsed', maka tutup details
+                    if (button.classList.contains('collapsed')) {
+                      var detailsId = button.getAttribute('data-bs-target').replace('#', '');
+                      var detailsElement = document.getElementById(detailsId);
+                      detailsElement.classList.remove('show');
+                    }
+                  });
+                });
+              </script>
+              
+              
+              
+           
 
                   </div>
                 </div>
@@ -593,27 +674,9 @@
                   <script>
                     document.write(new Date().getFullYear());
                   </script>
-                  , made with ❤️ by
-                  <a href="https://themeselection.com" target="_blank" class="footer-link fw-bolder">ThemeSelection</a>
+                  , made with ❤️ by Rainer, KD, and Abel
                 </div>
-                <div>
-                  <a href="https://themeselection.com/license/" class="footer-link me-4" target="_blank">License</a>
-                  <a href="https://themeselection.com/" target="_blank" class="footer-link me-4">More Themes</a>
-
-                  <a
-                    href="https://themeselection.com/demo/sneat-bootstrap-html-admin-template/documentation/"
-                    target="_blank"
-                    class="footer-link me-4"
-                    >Documentation</a
-                  >
-
-                  <a
-                    href="https://github.com/themeselection/sneat-html-admin-template-free/issues"
-                    target="_blank"
-                    class="footer-link me-4"
-                    >Support</a
-                  >
-                </div>
+                
               </div>
             </footer>
             <!-- / Footer -->
