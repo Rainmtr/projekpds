@@ -489,27 +489,7 @@
                     }
                     if ($found) {
                     ?>
-                        <div class="row">
-                            <div class="col-12">
-                                <div class="card">
-                                    <h3 class="card-header">Transaction ID: <?php echo $data->transaction_id; ?></h3>
-                                    <div class="card-body">
-                                        <p class="card-text, col-sm-5 col-form-label">Date: <?php echo $data->date; ?></p>
-                                        <p class="card-text, col-sm-5 col-form-label">Customer ID: <?php echo $data->cust_id; ?></p>
-                                        <?php if (isset($data->items)) { ?>
-                                            <?php foreach ($data->items as $item) { ?>
-                                                <?php if (strpos(strtolower($item->item), strtolower($keyword)) !== false) { ?>
-                                                    <p class="card-text, col-sm-5 col-form-label">Product Name: <?php echo $item->item; ?></p>
-                                                    <p class="card-text, col-sm-5 col-form-label">Quantity: <?php echo $item->qty; ?></p>
-                                                    <p class="card-text, col-sm-5 col-form-label">Price: <?php echo $item->price; ?></p>
-                                                <?php } ?>
-                                            <?php } ?>
-                                        <?php } ?>
-                                        <p class="card-text, col-sm-5 col-form-label">Total Price: <?php echo $data->total_price; ?></p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+           
                     <?php } ?>
                 <?php } ?>
             <?php } else { ?>
