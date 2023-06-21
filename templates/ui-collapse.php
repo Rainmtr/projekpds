@@ -18,7 +18,7 @@
     $options = [
     ];
     $query = new MongoDB\Driver\Query($filter, $options);
-    $cursor = $manager->executeQuery('tugas_pds.transaksi', $query);
+    $cursor = $manager->executeQuery('projek_pds.transaksi', $query);
     
 
     // Looping melalui hasil query
@@ -382,6 +382,7 @@
                       </div>
                   </div>
               </form>
+
               
               <!-- Sort Transaksi -->
               <?php
@@ -409,21 +410,23 @@
                       if ($type == 'product_name') {
                           $filter = ['items.item' => ['$regex' => $keyword]];
                       } elseif ($type == 'cust_id') {
-                          $filter = ['cust_id' => ['$regex' => $keyword]];
+                          $keyword = intval($keyword);
+                          $filter = ['cust_id' => $keyword];
                       } elseif ($type == 'transaction_id') {
-                          $filter = ['transaction_id' => ['$regex' => $keyword]];
+                        $keyword = intval($keyword);
+                        $filter = ['transaction_id' => $keyword];
                       }
               
                       // Query MongoDB with the search filter
                       $query = new MongoDB\Driver\Query($filter);
-                      $cursor = $manager->executeQuery('tugas_pds.transaksi', $query);
+                      $cursor = $manager->executeQuery('projek_pds.transaksi', $query);
               
                       // Load the query results into an array
                       $result = $cursor->toArray();
                   } else {
                       // If no search form is submitted, display all data
                       $query = new MongoDB\Driver\Query([]);
-                      $cursor = $manager->executeQuery('tugas_pds.transaksi', $query);
+                      $cursor = $manager->executeQuery('projek_pds.transaksi', $query);
               
                       // Load the query results into an array
                       $result = $cursor->toArray();
