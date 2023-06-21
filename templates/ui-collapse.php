@@ -5,7 +5,7 @@
     // Connect to MongoDB
     $client = new MongoDB\Client("mongodb://localhost:27017");
     // echo "Connection successful" . "<br/>";
-    $database = $client->selectDatabase('tugas_pds');
+    $database = $client->selectDatabase('projek_pds');
     $collection = $database->selectCollection('transaksi');
 
     // Mengambil semua dokumen dari koleksi
