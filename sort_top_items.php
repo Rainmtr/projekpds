@@ -8,6 +8,66 @@ $transactions = $collection->find()->toArray();
 
 ?>
 
+<?php
+    include('connections.php');
+
+    $sql = "SELECT * FROM product_list_2";
+    $result = $conn->query($sql);
+
+    $row = [];
+
+    if ($result->num_rows > 0) {
+      $row = $result->fetch_all(MYSQLI_ASSOC);
+    }
+?>
+
+<style>
+    .popup-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 400px;
+    height: 600px;
+    background-color: white;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: auto;
+    display: none;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    }
+
+    .popup-content {
+    position: relative;
+    width: 80%;
+    max-width: 600px;
+    margin: 20px;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    }
+
+    .popup-container.blur {
+    filter: blur(5px);
+    }
+
+    #closeButton {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 8px 16px;
+    background-color: #f00;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    }
+</style>
+
 <!-- <div class="card-body">
     <ul class="p-0 m-0" id="customerList">
     <li class="d-flex mb-4 pb-1">
@@ -28,13 +88,26 @@ $transactions = $collection->find()->toArray();
     </ul>
 </div> -->
 
-
 <a id="last7DaysButton" class="dropdown-item" href="javascript:void(0);">Last 7 Days</a>
 <a id="last4WeeksButton" class="dropdown-item" href="javascript:void(0);">Last 4 Weeks</a>
 <a id="last8WeeksButton" class="dropdown-item" href="javascript:void(0);">Last 8 Weeks</a>
 <a id="allTimeButton" class="dropdown-item" href="javascript:void(0);">Show All</a>
 
 <ul id="itemList"></ul>
+
+<button id="showPopupButton" onclick="showChartPopup()">Show Pop-up</button>
+<div id="popupContainer" class="popup-container">
+  <div class="popup-content">
+    <!-- Content of the pop-up goes here -->
+    <button id="closeButton">Close</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- <script src="assets/vendor/libs/apex-charts/apexcharts.js"></script>
+<script src="https://unpkg.com/resize-observer-polyfill/dist/ResizeObserver.global.js"></script>
+<script src="config.js"></script> -->
 
 <!-- <script>
     // Assuming you have the MongoDB query result stored in the `transactionsJson` variable
@@ -149,6 +222,10 @@ $transactions = $collection->find()->toArray();
     var transactions_top5_chart = <?php echo json_encode($transactions); ?>;
     var filteredTransactions = []; // Initialize as an empty array
 
+    var top5Items_name;
+    var summedData = {};
+    week_value = [];
+
     function filterTransactions(filter) {
         var currentDate = new Date('2011-01-10');
         var startDate;
@@ -227,7 +304,7 @@ $transactions = $collection->find()->toArray();
         });
 
         // Fetch item name only
-        var top5Items_name = [];
+        top5Items_name = [];
         top5Items.forEach(function(transaction) {
             top5Items_name.push(transaction.itemName);
         });
@@ -256,61 +333,6 @@ $transactions = $collection->find()->toArray();
                 }
             });
         });
-
-        // console.log(top5Items_name);
-        // console.log(top5item_chart);
-
-        // top5item_chart.forEach(function(transaction) {
-        //     var interval = transaction.transactionDate; // Assuming the transactionDate represents the interval
-        //     var itemName = transaction.itemName;
-        //     var quantity = transaction.itemQuantity;
-
-        //     // Check if the interval exists in the summedData object
-        //     if (!summedData[interval]) {
-        //         summedData[interval] = {};
-        //         top5Items_name.forEach(function(itemName) {
-        //             summedData[interval][itemName] = 0;
-        //         });
-        //     }
-
-        //     // Check if the item name exists in the interval's data
-        //     if (!summedData[interval][itemName]) {
-        //         summedData[interval][itemName] = 0;
-        //     }
-
-        //     // Accumulate the quantity for the item name within the interval
-        //     summedData[interval][itemName] += quantity;
-        // });
-
-        // console.log(summedData);
-
-        // var currentDate = new Date('2011-01-10'); // Replace this with your current date
-
-        // // Calculate the start date of the first week
-        // var firstWeekStartDate = new Date(currentDate.getTime() - 55 * 24 * 60 * 60 * 1000); // Subtract 55 days to cover 8 weeks
-
-        // var intervalStartDate = new Date(firstWeekStartDate); // Initialize the interval start date
-        // var intervalEndDate = new Date(intervalStartDate.getTime() + (6 * 24 * 60 * 60 * 1000) - 1 ); // Set the interval end date for the first week
-
-        // var intervals = []; // Array to store the intervals
-
-        // // Iterate over the 8-week intervals
-        // for (var i = 1; i <= 8; i++) {
-        //     var interval = {
-        //         startDate: new Date(intervalStartDate),
-        //         endDate: new Date(intervalEndDate)
-        //     };
-
-        //     intervals.push(interval);
-
-        //     // Move to the next interval
-        //     intervalStartDate = new Date(intervalEndDate.getTime() + 24 * 60 * 60 * 1000);
-        //     intervalEndDate = new Date(intervalEndDate.getTime() + 7 * 24 * 60 * 60 * 1000);
-        // }
-
-        // console.log(intervals);
-
-        var summedData = {};
 
         var currentDate = new Date('2011-01-10'); // Replace this with your current date
 
@@ -350,9 +372,6 @@ $transactions = $collection->find()->toArray();
 
         console.log(summedData);
 
-
-        // var transactionValueData = calculateTransactionValue(filteredTransactions_charts, startDate, currentDate, interval, groupBy);
-
         // Update the item list in the HTML
         var itemList = document.getElementById('itemList');
         itemList.innerHTML = ''; // Clear previous list
@@ -361,6 +380,160 @@ $transactions = $collection->find()->toArray();
             var li = document.createElement('li');
             li.innerText = 'Item: ' + item.itemName + ', Quantity: ' + item.itemCount;
             itemList.appendChild(li);
+        });
+    }
+
+    function showChartPopup() {
+        // Add the blur class to the body element
+        document.body.classList.add('blur');
+        var itemNum = 1;
+
+        top5Items_name.forEach(function(itemName) {
+            var week_value = [];
+            for (var key in summedData) {
+                var nest_doc = summedData[key];
+                for (var nest_key in nest_doc) {
+                    if (nest_key === itemName) {
+                        week_value.push(nest_doc[nest_key]);
+                    }
+                }
+            }
+
+            // Fetch PHP
+            var rows = <?php echo json_encode($row); ?>;
+
+            var qtyOnHand = null;
+
+            for (var i = 0; i < rows.length; i++) {
+                if (rows[i].item === itemName) {
+                    qtyOnHand = rows[i].qty_on_hand;
+                    break;
+                }
+            }
+            
+            var sum_trend = week_value.reduce((accumulator, currentValue) => {
+                return accumulator + currentValue
+            },0);
+
+            var status_bb = null;
+            if (qtyOnHand < sum_trend) {
+                status_bb = 'Restock ASAP';
+            } else {
+                status_bb = 'Enough Stock for 2 months';
+            }
+
+        
+            var containerId = 'chartContainer-' + itemNum;
+            itemNum = itemNum + 1;
+
+            // Create a chart container element
+            var chartContainer = document.createElement('div');
+            chartContainer.id = containerId;
+
+            // Create a heading element
+            var heading = document.createElement('h2');
+            heading.innerText = itemName; // Set the heading text to the item name
+
+            // Append the heading to the chart container
+            chartContainer.appendChild(heading);
+
+            // Get total qty sold in 2 months
+            var total_qty = document.createElement('h3');
+            total_qty.innerText = 'Total sold in 2 months: ' + sum_trend; 
+
+            // Append the total qty to the chart container
+            chartContainer.appendChild(total_qty);
+
+            // Get QTY on Hand
+            var qoh = document.createElement('h3');
+            qoh.innerText = 'QTY on Hand: ' + qtyOnHand; 
+
+            // Append the qty on hand to the chart container
+            chartContainer.appendChild(qoh);
+
+            // Get status
+            var status_restock = document.createElement('h3');
+            status_restock.innerText = 'Restock Status: ' + status_bb; 
+
+            // Append status
+            chartContainer.appendChild(status_restock);
+
+            
+            // Create a canvas element
+            var canvas = document.createElement('canvas');
+            canvas.id = 'canvas-' + containerId;
+            canvas.width = 400; // Set the canvas width
+            canvas.height = 300; // Set the canvas height
+
+            // Append the canvas to the chart container
+            chartContainer.appendChild(canvas);
+
+            // Append the chart container to the pop-up container
+            var popupContainer = document.getElementById('popupContainer');
+            popupContainer.appendChild(chartContainer);
+
+            // Generate the chart with the week_value data
+            generateChart(canvas.id, week_value);
+        }); 
+
+        // Show the pop-up container
+        var popupContainer = document.getElementById('popupContainer');
+        popupContainer.style.display = 'block';
+    }
+
+    function hideChartPopup() {
+        // Remove the blur class from the body element
+        document.body.classList.remove('blur');
+
+        // Clear the chart containers inside the pop-up container
+        var popupContainer = document.getElementById('popupContainer');
+        popupContainer.innerHTML = '';
+
+        // Create and style the close button
+        var closeButton = document.createElement('button');
+        closeButton.innerText = 'Close';
+        closeButton.style.cssText = 'position: absolute; top: 10px; right: 10px; padding: 10px; background-color: #ffffff; border: none; border-radius: 4px; cursor: pointer;';
+
+        // Add the event listener to the close button
+        closeButton.addEventListener('click', hideChartPopup);
+
+        // Add the close button to the pop-up container
+        popupContainer.appendChild(closeButton);
+
+        // Hide the pop-up container
+        popupContainer.style.display = 'none';
+    }
+
+    function generateChart(canvasId, data) {
+        // Retrieve the canvas element using its ID
+        var canvas = document.getElementById(canvasId);
+
+        // Get the chart context
+        var ctx = canvas.getContext('2d');
+
+        // Generate the chart using Chart.js
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+            labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6', 'Week 7', 'Week 8'],
+            datasets: [
+                {
+                label: 'Quantity',
+                data: data,
+                backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+                }
+            ]
+            },
+            options: {
+            responsive: true,
+            scales: {
+                y: {
+                beginAtZero: true
+                }
+            }
+            }
         });
     }
 
@@ -384,6 +557,9 @@ $transactions = $collection->find()->toArray();
     allTimeButton.addEventListener('click', function() {
         filterTransactions('allTime');
     });
+
+    var closeButton = document.getElementById('closeButton');
+    closeButton.addEventListener('click', hideChartPopup);
 
     // Initially filter for the last 7 days
     filterTransactions('last7days');
